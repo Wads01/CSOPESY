@@ -19,4 +19,3 @@ Wait for a few seconds and the program should start running.
 After running run.bat once, if no changes are made to the code, you may also click on OS_EMULATOR.exe located in the OS_EMULATOR folder to run the program.
 ### "help" to see all commands
 When in the program, type "help" to see the list of all possible commands you may input.
-![Screenshot 2024-07-06 194353](https://github.com/Wads01/CSOPESY/assets/107260683/da2ccb57-ce0c-4ea9-92d7-7830f0823a6b)
