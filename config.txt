@@ -1,0 +1,13 @@
+num-cpu 4
+scheduler rr
+quantum-cycles 4
+preemptive 1
+batch-process-freq 0.25
+min-ins 500
+max-ins 1000
+delays-per-exec 0.25
+max-overall-mem 16384
+min-mem-per-proc 16
+max-mem-per-proc 4096
+min-page-per-proc 1
+max-page-per-proc 1
