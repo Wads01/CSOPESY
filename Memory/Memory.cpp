@@ -61,7 +61,7 @@ void Memory::readConfigFile(const std::string& filename){
 }
 
 void* Memory::allocateMemory(int processID, size_t size){
-    void* ptr = allocator->allocate(size);
+    void* ptr = allocator->allocate(processID, size);
     if(ptr)
         currentOverallMemoryUsage += size;
 
@@ -105,4 +105,9 @@ int Memory::getMaxMem() const{
 
 size_t Memory::getMaxSize() const{
     return allocator->getMaxSize();
+}
+
+
+IMemoryAllocator* Memory::getAllocator(){
+    return allocator.get();
 }

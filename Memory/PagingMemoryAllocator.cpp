@@ -1,85 +1,103 @@
-#include "PagingMemoryAllocator.h"
 #include <new>
 #include <cstring>
 
-PagingMemoryAllocator::PagingMemoryAllocator(size_t maxSize) : maxSize(maxSize), allocatedSize(0){
-    memory = new char[maxSize * sizeof(size_t)];
-    for (size_t i = 0; i < maxSize; ++i)
-        freeFrameList.insert(i);
+#include "PagingMemoryAllocator.h"
+
+
+PagingMemoryAllocator::PagingMemoryAllocator(size_t maxSize) : maxSize(maxSize), numFrames(maxSize), allocatedSize(0) {
+    // Initialize free frame list
+    for (size_t i = 0; i < numFrames; ++i)
+        freeFrameList.push_back(i);
 }
 
-PagingMemoryAllocator::~PagingMemoryAllocator(){
-    delete[] memory;
+PagingMemoryAllocator::~PagingMemoryAllocator() {
+    // Destructor
 }
 
-void* PagingMemoryAllocator::allocate(size_t size){
-    if (freeFrameList.size() < size)
+void* PagingMemoryAllocator::allocate(int processID, size_t size) {
+    // Calculate number of frames required
+    size_t numPages = (size + sizeof(size_t) - 1) / sizeof(size_t); // Page size in frames
+    
+    // Check if enough free frames are available
+    if (freeFrameList.size() < numPages)
         return nullptr;
 
-    size_t firstFrameIndex = allocateFrames(size);
-    void* allocatedPtr = static_cast<void*>(memory + firstFrameIndex * sizeof(size_t));
-    
-    for (size_t i = 0; i < size; ++i)
-        new (memory + (firstFrameIndex + i) * sizeof(size_t)) size_t(0);
+    // Allocate frames
+    size_t frameIndex = allocateFrames(numPages, processID);
+    if (frameIndex == -1)
+        return nullptr;
 
-    allocationMap[allocatedPtr] = size;
-    allocatedSize += size;
-
-    return allocatedPtr;
+    // Return pointer to allocated memory
+    return reinterpret_cast<void*>(frameIndex * sizeof(size_t));
 }
 
-size_t PagingMemoryAllocator::deallocate(void* ptr){
+size_t PagingMemoryAllocator::deallocate(void* ptr) {
+    size_t frameIndex = reinterpret_cast<size_t>(ptr) / sizeof(size_t);
 
-    if (ptr < static_cast<void*>(memory) || ptr >= static_cast<void*>(memory + maxSize * sizeof(size_t))){
-        std::cerr << "Pointer out of bounds: " << ptr << std::endl;
-        return 0;
-    }
-
-    auto it = allocationMap.find(ptr);
-    if (it == allocationMap.end()){
+    // Check if pointer is valid
+    if (frameIndex >= numFrames || frameMap.find(frameIndex) == frameMap.end()) {
         std::cerr << "Invalid deallocation attempt at pointer: " << ptr << std::endl;
         return 0;
     }
 
-    size_t size = it->second;
-    size_t frameIndex = (static_cast<char*>(ptr) - memory) / sizeof(size_t);
+    size_t processID = frameMap[frameIndex];
+    size_t numFramesToDeallocate = 0;
 
-    deallocateFrames(frameIndex, size);
+    // Find how many frames to deallocate for this process
+    for (auto it = frameMap.begin(); it != frameMap.end(); ) {
+        if (it->second == processID) {
+            numFramesToDeallocate++;
+            deallocateFrames(1, it->first);
+            it = frameMap.erase(it); // Remove the frame from the map
+        } else {
+            ++it;
+        }
+    }
 
-    allocationMap.erase(it);
-    allocatedSize -= size;
-
-    return size;
+    allocatedSize -= numFramesToDeallocate;
+    return numFramesToDeallocate * sizeof(size_t);
 }
 
-std::string PagingMemoryAllocator::visualizeMemory(){
+std::string PagingMemoryAllocator::visualizeMemory() {
     std::ostringstream oss;
     oss << "Paging Memory Visualization\n";
     oss << "Max Size: " << maxSize << " KB\n";
-    oss << "Allocated Size: " << allocatedSize << " KB\n";
-    oss << "Free Frames: " << freeFrameList.size() << "/" << maxSize << "\n";
-    oss << "Allocated Frames: " << (maxSize - freeFrameList.size()) << "/" << maxSize << "\n";
+    oss << "Allocated Size: " << allocatedSize * sizeof(size_t) / 1024 << " KB\n";
+    oss << "Free Frames: " << freeFrameList.size() << "/" << numFrames << "\n";
+    oss << "Allocated Frames: " << numFrames - freeFrameList.size() << "/" << numFrames << "\n";
     return oss.str();
 }
 
-size_t PagingMemoryAllocator::getMaxSize() const{
-    return maxSize;
+size_t PagingMemoryAllocator::allocateFrames(size_t numFrames, size_t processID) {
+    if (numFrames > freeFrameList.size())
+        return -1;
+
+    size_t startFrameIndex = freeFrameList.back() - numFrames + 1;
+    for (size_t i = 0; i < numFrames; ++i) {
+        frameMap[startFrameIndex + i] = processID;
+    }
+    
+    freeFrameList.erase(freeFrameList.end() - numFrames, freeFrameList.end());
+    allocatedSize += numFrames;
+
+    return startFrameIndex;
 }
 
-size_t PagingMemoryAllocator::allocateFrames(size_t numFrames){
-    auto it = freeFrameList.begin();
-    size_t firstFrameIndex = *it;
-    for (size_t i = 0; i < numFrames; ++i)
-        freeFrameList.erase(it++);
+void PagingMemoryAllocator::deallocateFrames(size_t numFrames, size_t frameIndex) {
+    for (size_t i = 0; i < numFrames; ++i) {
+        freeFrameList.push_back(frameIndex + i);
+        frameMap.erase(frameIndex + i);
+    }
 
-    return firstFrameIndex;
+    std::sort(freeFrameList.begin(), freeFrameList.end());
 }
 
-void PagingMemoryAllocator::deallocateFrames(size_t frameIndex, size_t numFrames){
-    for (size_t i = 0; i < numFrames; ++i)
-        freeFrameList.insert(frameIndex + i);
+bool PagingMemoryAllocator::loadPages(Process* process, size_t numPages) {
+    // This function might need additional implementation based on how you want to handle pages
+    // For now, it returns true if enough frames are available
+    return (freeFrameList.size() >= numPages);
 }
 
-std::string PagingMemoryAllocator::getName() const{
+std::string PagingMemoryAllocator::getName() const {
     return "PagingMemoryAllocator";
 }

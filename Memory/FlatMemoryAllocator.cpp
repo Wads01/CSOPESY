@@ -13,7 +13,7 @@ FlatMemoryAllocator::~FlatMemoryAllocator(){
     delete[] memory;
 }
 
-void* FlatMemoryAllocator::allocate(size_t size){
+void* FlatMemoryAllocator::allocate(int processID, size_t size){
     for (size_t i = 0; i <= maxSize - size; ++i){
         if (canAlloc(i, size)){
             allocAt(i, size);

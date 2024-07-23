@@ -12,7 +12,7 @@ public:
     FlatMemoryAllocator(size_t maxSize);
     ~FlatMemoryAllocator();
 
-    void* allocate(size_t size) override;
+    void* allocate(int processID, size_t size) override;
     size_t deallocate(void* ptr) override;
     std::string visualizeMemory() override;
     size_t getMaxSize() const override;

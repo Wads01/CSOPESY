@@ -148,6 +148,11 @@ void Scheduler::roundRobin(int quantumCycles){
                 runningProcesses[coreID] = process;
 
 
+                if(Memory::getInstance().getAllocator()->getName() == "PagingMemoryAllocator"){
+                    // Checking and Loading All Pages
+                    
+                }
+
                 // Allocate memory and store the returned pointer in the process
                 process->allocatedMemory = Memory::getInstance().allocateMemory(process->getPID(), process->memoryRequired);
                 if (!process->allocatedMemory){

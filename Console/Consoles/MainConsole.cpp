@@ -65,6 +65,11 @@ void MainConsole::processCommand(const std::string &command){
         ui.clear();
         onEnabled();
     }
+    else if (command_0 == "vmstat")
+    {
+        std::string memVisual = memory->visualizeMemory();
+        std::cout << memVisual << std::endl;
+    }
     else if (command_0 == "view-config")
     {
         std::cout << std::endl;

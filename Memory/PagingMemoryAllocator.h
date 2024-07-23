@@ -8,15 +8,17 @@
 #include <unordered_map>
 #include <set>
 #include <sstream>
+#include <algorithm>
 
 #include "IMemoryAllocator.h"
+#include "../Processor/Process.h"
 
 class PagingMemoryAllocator : public IMemoryAllocator {
 public:
     PagingMemoryAllocator(size_t maxSize);
     ~PagingMemoryAllocator();
 
-    void* allocate(size_t size) override;
+    void* allocate(int processID, size_t size) override;
     size_t deallocate(void* ptr) override;
     std::string visualizeMemory() override;
 
@@ -25,13 +27,14 @@ public:
 
 private:
     size_t maxSize;
+    size_t numFrames;
     size_t allocatedSize;
-    char* memory;
-    std::unordered_map<void*, size_t> allocationMap;
-    std::set<size_t> freeFrameList;
+    std::unordered_map<size_t, size_t> frameMap;
+    std::vector<size_t> freeFrameList;
 
-    size_t allocateFrames(size_t numFrames);
-    void deallocateFrames(size_t frameIndex, size_t numFrames);
+    size_t allocateFrames(size_t numFrames, size_t processID);
+    void deallocateFrames(size_t numFrames, size_t frameIndex);
+    bool loadPages(Process* process, size_t numPages);
 };
 
 #endif

@@ -29,6 +29,8 @@ public:
     int getMinMem() const;
     int getMaxMem() const;
     size_t getMaxSize() const;
+    IMemoryAllocator* getAllocator();
+
 private:
     Memory();
     ~Memory();
