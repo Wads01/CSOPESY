@@ -9,5 +9,5 @@ delays-per-exec 0.25
 max-overall-mem 16384
 min-mem-per-proc 16
 max-mem-per-proc 4096
-min-page-per-proc 1
-max-page-per-proc 1
+min-page-per-proc 2
+max-page-per-proc 14

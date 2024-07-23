@@ -49,6 +49,8 @@ public:
     ProcessState getProcessState() const;
     void* allocatedMemory = nullptr;
 
+    std::vector<size_t> allocatedFrames;
+
     void executeTask();
     void executeTask(int quantumCycles);
     void generateRandomInstruction(int min, int max);
