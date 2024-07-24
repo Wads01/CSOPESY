@@ -54,16 +54,20 @@ void Memory::readConfigFile(const std::string& filename){
 
     if(minPagePerProcess == 1 && maxPagePerProcess == 1)
         allocator = std::make_unique<FlatMemoryAllocator>(maxOverallMemory);
-    else
-        allocator = std::make_unique<PagingMemoryAllocator>(maxOverallMemory);
+    else{
+        auto pagingAllocator = std::make_unique<PagingMemoryAllocator>(maxOverallMemory);
+        pagingAllocator->setMinPageCount(minPagePerProcess);
+        pagingAllocator->setMaxPageCount(maxPagePerProcess);
+        allocator = std::move(pagingAllocator);
+    }
 
     file.close();
 }
 
-void* Memory::allocateMemory(int processID, size_t size){
-    void* ptr = allocator->allocate(processID, size);
+void* Memory::allocateMemory(Process* process){
+    void* ptr = allocator->allocate(process);
     if(ptr)
-        currentOverallMemoryUsage += size;
+        currentOverallMemoryUsage += process->getMemRequired();
 
     return ptr;
 }
@@ -92,6 +96,8 @@ void Memory::getInfo(){
     std::cout << "Max Overall Memory: " << maxOverallMemory << " KB" << std::endl;
     std::cout << "Min Memory Per Process: " << minMemoryPerProcess << " KB" << std::endl;
     std::cout << "Max Memory Per Process: " << maxMemoryPerProcess << " KB" << std::endl;
+    std::cout << "Min Page Per Process: " << minPagePerProcess << " KB" << std::endl;
+    std::cout << "Max Page Per Process: " << maxPagePerProcess << " KB" << std::endl;
     std::cout << "Memory Allocator: " << allocator->getName() << std::endl;
 }
 

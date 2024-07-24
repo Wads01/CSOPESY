@@ -20,7 +20,7 @@ public:
 
     void getInfo();
     void readConfigFile(const std::string& filename);
-    void* allocateMemory(int processID, size_t size);
+    void* allocateMemory(Process* process);
     void deallocateMemory(void* ptr);
 
     size_t getCurrentOverallMemoryUsage() const;

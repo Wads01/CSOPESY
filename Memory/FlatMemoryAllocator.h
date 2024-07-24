@@ -5,14 +5,16 @@
 #include <string>
 #include <cstddef>
 #include <iostream>
+
 #include "IMemoryAllocator.h"
+#include "../Processor/Process.h"
 
 class FlatMemoryAllocator : public IMemoryAllocator {
 public:
     FlatMemoryAllocator(size_t maxSize);
     ~FlatMemoryAllocator();
 
-    void* allocate(int processID, size_t size) override;
+    void* allocate(Process* process) override;
     size_t deallocate(void* ptr) override;
     std::string visualizeMemory() override;
     size_t getMaxSize() const override;

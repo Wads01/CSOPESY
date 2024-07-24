@@ -11,24 +11,10 @@ PagingMemoryAllocator::PagingMemoryAllocator(size_t maxSize) : maxSize(maxSize),
 
 PagingMemoryAllocator::~PagingMemoryAllocator() {}
 
-void* PagingMemoryAllocator::allocate(int processID, size_t size){
-    size_t numFramesRequired = (size + sizeof(size_t) - 1) / sizeof(size_t);
+void* PagingMemoryAllocator::allocate(Process* process){
 
-    if (freeFrameList.size() < numFramesRequired)
-        return nullptr; // Not enough frames available
 
-    if (!loadPages(processID, numFramesRequired))
-        return nullptr; // No Frames Allocated
-
-    size_t firstFrameIndex = allocateFrames(numFramesRequired, processID);
-
-    if(firstFrameIndex == 0)
-        return nullptr;
-
-    void* allocatedPtr = reinterpret_cast<void*>(firstFrameIndex * sizeof(size_t));
-    frameMap[firstFrameIndex] = numFramesRequired;
-
-    return allocatedPtr;
+    return nullptr;
 }
 
 size_t PagingMemoryAllocator::deallocate(void* ptr){
@@ -92,4 +78,12 @@ size_t PagingMemoryAllocator::getMaxSize() const{
 
 std::string PagingMemoryAllocator::getName() const{
     return "PagingMemoryAllocator";
+}
+
+void PagingMemoryAllocator::setMinPageCount(int minPageCount){
+    this->minPageCount = minPageCount;
+}
+
+void PagingMemoryAllocator::setMaxPageCount(int maxPageCount){
+    this->maxPageCount = maxPageCount;
 }

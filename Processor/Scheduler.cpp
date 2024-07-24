@@ -44,13 +44,15 @@ Scheduler& Scheduler::getInstance(){
 void Scheduler::getInfo(){
     std::cout << "Scheduler Configuration Information:" << std::endl;
     std::cout << "--------------------------------" << std::endl;
-    std::cout << "Number of CPU cores: " << numCores << std::endl;
-    std::cout << "Scheduler algorithm: " << schedulerAlgorithm << std::endl;
-    std::cout << "Quantum cycles: " << quantumCycles << std::endl;
-    std::cout << "Batch process frequency: " << batchProcessFrequency << std::endl;
-    std::cout << "Minimum instructions per process: " << minInstructions << std::endl;
-    std::cout << "Maximum instructions per process: " << maxInstructions << std::endl;
-    std::cout << "Delays per execution: " << delaysPerExecution << std::endl;
+    std::cout << "Number of CPU Cores: " << numCores << std::endl;
+    std::cout << "Scheduler Algorithm: " << schedulerAlgorithm << std::endl;
+    std::cout << "Quantum Cycles: " << quantumCycles << std::endl;
+    std::cout << "Batch Process Frequency: " << batchProcessFrequency << std::endl;
+    std::cout << "Minimum Instructions per Process: " << minInstructions << std::endl;
+    std::cout << "Maximum Instructions per Process: " << maxInstructions << std::endl;
+    std::cout << "Delays per Execution: " << delaysPerExecution << std::endl;
+    std::cout << "Minimum Page per Process: " << minPage << std::endl;
+    std::cout << "Maximum Page per Process: " << maxPage << std::endl;
     std::cout << "--------------------------------" << std::endl;
 
 }
@@ -91,7 +93,7 @@ void Scheduler::firstComeFirstServe(){
                 process->cpuCoreID = coreID;
                 runningProcesses[coreID] = process;
 
-                if (!Memory::getInstance().allocateMemory(process->getPID(), process->memoryRequired)){
+                if (!Memory::getInstance().allocateMemory(process.get())){
                     // TEMP SOLUTION; BACKING STORE WIP
                     std::cerr << "Memory allocation failed for process " << process->getPID() << std::endl;
                     process->currentState = Process::WAITING;
@@ -148,7 +150,7 @@ void Scheduler::roundRobin(int quantumCycles){
                 runningProcesses[coreID] = process;
 
                 // Allocate memory and store the returned pointer in the process
-                process->allocatedMemory = Memory::getInstance().allocateMemory(process->getPID(), process->memoryRequired);
+                process->allocatedMemory = Memory::getInstance().allocateMemory(process.get());
                 if (!process->allocatedMemory){
                     // TEMP SOLUTION; BACKING STORE WIP
                     process->currentState = Process::WAITING;
@@ -214,6 +216,8 @@ void Scheduler::readConfigFile(const std::string& filename){
             else if (key == "min-ins") { minInstructions = std::stoi(value); }
             else if (key == "max-ins") { maxInstructions = std::stoi(value); }
             else if (key == "delays-per-exec") { delaysPerExecution = std::stod(value); }
+            else if (key == "min-page-per-proc") { minPage = std::stod(value); }
+            else if (key == "max-page-per-proc") { maxPage = std::stod(value); }
         }
         else 
             std::cerr << "Warning: Unrecognized parameter in config file: " << key << std::endl;
@@ -295,6 +299,14 @@ int Scheduler::getMinMem() const {
 
 int Scheduler::getMaxMem() const {
     return Memory::getInstance().getMaxMem();
+}
+
+int Scheduler::getMinPage() const {
+    return minPage;
+}
+
+int Scheduler::getMaxPage() const {
+    return maxPage;
 }
 
 std::vector<std::shared_ptr<Process>> Scheduler::getRunningProcesses() const{

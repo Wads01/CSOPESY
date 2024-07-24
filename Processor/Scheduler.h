@@ -33,6 +33,8 @@ public:
     int getMaxInstructions() const;
     int getMinMem() const;
     int getMaxMem() const;
+    int getMinPage() const;
+    int getMaxPage() const;
     std::vector<std::shared_ptr<Process>> getRunningProcesses() const;
     std::vector<std::shared_ptr<Process>> getFinishedProcesses() const;
 
@@ -53,6 +55,8 @@ private:
     std::string schedulerAlgorithm;
     int quantumCycles;
     double batchProcessFrequency;
+    int minPage;
+    int maxPage;
     int minInstructions;
     int maxInstructions;
     double delaysPerExecution;

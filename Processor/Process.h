@@ -31,8 +31,8 @@ public:
         FINISHED
     };
 
-    Process(int pid, const std::string &name, RequirementFlags requirementFlags,
-        const std::string &timestamp, int minInstructions, int maxInstructions, int minMem, int maxMem);
+    Process(int pid, const std::string &name, RequirementFlags requirementFlags, const std::string &timestamp,
+            int minInstructions, int maxInstructions, int minMem, int maxMem, int minPage, int maxPage);
     void addCommand(ICommand::CommandType commandType);
     void executeCurrentCommand() const;
     void moveToNextLine();
@@ -46,6 +46,7 @@ public:
     int getMaxInstructions() const;
     int getCurrInstructions() const;
     size_t getMemRequired() const;
+    int getNumPage() const;
     ProcessState getProcessState() const;
     void* allocatedMemory = nullptr;
 
@@ -55,6 +56,7 @@ public:
     void executeTask(int quantumCycles);
     void generateRandomInstruction(int min, int max);
     void generateRandomMemReq(int minMem, int maxMem);
+    void generateRandomPageReq(int minPage, int maxPage);
 
 private:
     int pid;
@@ -62,7 +64,6 @@ private:
     typedef std::vector<std::shared_ptr<ICommand>> CommandList;
     CommandList commandList;
     size_t memoryRequired;
-
     std::mutex mutex;
     int commandCounter;
     int cpuCoreID = -1;
@@ -75,6 +76,9 @@ private:
     int numInstruction;
     int minMem;
     int maxMem;
+    int numPage;
+    int minPage;
+    int maxPage;
 
     friend class ResourceEmulator;
     friend class Scheduler;

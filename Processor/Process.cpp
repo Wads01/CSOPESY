@@ -9,11 +9,11 @@
 #include "../Command/PrintCommand.h"
 #include "../UI/UI_Manager.h"
 
-Process::Process(int pid, const std::string &name, RequirementFlags requirementFlags,
-                const std::string &timestamp, int minInstructions, int maxInstructions, int minMem, int maxMem)
+Process::Process(int pid, const std::string &name, RequirementFlags requirementFlags, const std::string &timestamp,
+                 int minInstructions, int maxInstructions, int minMem, int maxMem, int minPage, int maxPage)
     : pid(pid), name(name), requirementFlags(requirementFlags),timestamp(timestamp),
     minInstructions(minInstructions), maxInstructions(maxInstructions),
-    minMem(minMem), maxMem(maxMem){
+    minMem(minMem), maxMem(maxMem), minPage(minPage), maxPage(maxPage){
 
         currentState = Process::READY;
         cpuCoreID = -1;
@@ -21,6 +21,7 @@ Process::Process(int pid, const std::string &name, RequirementFlags requirementF
         currInstruction = 0;
         generateRandomInstruction(minInstructions, maxInstructions);
         generateRandomMemReq(minMem, maxMem);
+        generateRandomPageReq(minPage, maxPage);
 
         this->maxInstructions = numInstruction - 1;
 }
@@ -92,6 +93,14 @@ void Process::generateRandomMemReq(int minMem, int maxMem){
     memoryRequired = dis(gen);
 }
 
+void Process::generateRandomPageReq(int minPage, int maxPage){
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(minPage, maxPage);
+
+    numPage = dis(gen);
+}
+
 int Process::getPID() const{
     return pid;
 }
@@ -126,6 +135,10 @@ int Process::getCurrInstructions() const{
 
 size_t Process::getMemRequired() const{
     return memoryRequired;
+}
+
+int Process::getNumPage() const{
+    return numPage;
 }
 
 Process::ProcessState Process::getProcessState() const {

@@ -93,7 +93,7 @@ void MainConsole::processCommand(const std::string &command){
                 std::string timestamp = ui.generateTimestamp();
 
                 // Create Process
-                std::shared_ptr<Process> newProcess = std::make_shared<Process>(pid, tokens[2], reqFlags, timestamp, scheduler->getMinInstructions(), scheduler->getMaxInstructions(), scheduler->getMinMem(), scheduler->getMaxMem());
+                std::shared_ptr<Process> newProcess = std::make_shared<Process>(pid, tokens[2], reqFlags, timestamp, scheduler->getMinInstructions(), scheduler->getMaxInstructions(), scheduler->getMinMem(), scheduler->getMaxMem(), scheduler->getMinPage(), scheduler->getMaxPage());
 
                 // Create Screen with Process
                 std::shared_ptr<BaseScreen> newScreen = std::make_shared<BaseScreen>(newProcess, tokens[2]);
@@ -195,7 +195,7 @@ void MainConsole::schedulerStart(){
         std::string timestamp = ui.generateTimestamp();
         std::string name = "p_" + std::to_string(pid);
 
-        std::shared_ptr<Process> newProcess = std::make_shared<Process>(pid, name, reqFlags, timestamp, scheduler->getMinInstructions(), scheduler->getMaxInstructions(), scheduler->getMinMem(), scheduler->getMaxMem());
+        std::shared_ptr<Process> newProcess = std::make_shared<Process>(pid, name, reqFlags, timestamp, scheduler->getMinInstructions(), scheduler->getMaxInstructions(), scheduler->getMinMem(), scheduler->getMaxMem(), scheduler->getMinPage(), scheduler->getMaxPage());
 
         std::shared_ptr<BaseScreen> newScreen = std::make_shared<BaseScreen>(newProcess, name);
         consoleManager->registerScreen(newScreen);
