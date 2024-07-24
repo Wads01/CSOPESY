@@ -19,7 +19,7 @@ public:
     ~PagingMemoryAllocator();
 
     void* allocate(Process* process) override;
-    size_t deallocate(void* ptr) override;
+    size_t deallocate(Process* process) override;
     std::string visualizeMemory() override;
 
     size_t getMaxSize() const override;
@@ -28,21 +28,18 @@ public:
     void setMinPageCount(int minPageCount);
     void setMaxPageCount(int maxPageCount);
 
+    bool loadPages(Process* process);
 private:
     int minPageCount;
     int maxPageCount;
 
     size_t maxSize;
-    size_t memPerPage;
     size_t numFrames;
-    size_t allocatedSize;
     std::unordered_map<size_t, size_t> frameMap;
     std::vector<size_t> freeFrameList;
-    std::unordered_map<int, std::vector<size_t>> processFrameMap;
     
-    size_t allocateFrames(size_t numFrames, int processID);
+    size_t allocateFrames(size_t numFrames, size_t processID);
     void deallocateFrames(size_t numFrames, size_t frameIndex);
-    bool loadPages(int processID, size_t numPages);
 };
 
 #endif

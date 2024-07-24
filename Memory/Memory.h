@@ -21,7 +21,7 @@ public:
     void getInfo();
     void readConfigFile(const std::string& filename);
     void* allocateMemory(Process* process);
-    void deallocateMemory(void* ptr);
+    void deallocateMemory(Process* process);
 
     size_t getCurrentOverallMemoryUsage() const;
     std::string visualizeMemory() const;

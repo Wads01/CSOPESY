@@ -24,19 +24,21 @@ void* FlatMemoryAllocator::allocate(Process* process){
     return nullptr;
 }
 
-size_t FlatMemoryAllocator::deallocate(void* ptr){
-    if (ptr < static_cast<void*>(memory) || ptr >= static_cast<void*>(memory + maxSize)){
-        std::cerr << "Pointer out of bounds: " << ptr << std::endl;
+size_t FlatMemoryAllocator::deallocate(Process* process){
+    void* allocatedMemory = process->allocatedMemory;
+
+    if (allocatedMemory < static_cast<void*>(memory) || allocatedMemory >= static_cast<void*>(memory + maxSize)) {
+        std::cerr << "Pointer out of bounds for process: " << process->getPID() << std::endl;
         return 0;
     }
 
-    auto it = allocationSizes.find(ptr);
-    if (it == allocationSizes.end()){
-        std::cerr << "Invalid deallocation attempt at pointer: " << ptr << std::endl;
+    auto it = allocationSizes.find(allocatedMemory);
+    if (it == allocationSizes.end()) {
+        std::cerr << "Invalid deallocation attempt for process: " << process->getPID() << std::endl;
         return 0;
     }
 
-    size_t index = static_cast<char*>(ptr) - memory;
+    size_t index = static_cast<char*>(allocatedMemory) - memory;
     return deallocAt(index);
 }
 

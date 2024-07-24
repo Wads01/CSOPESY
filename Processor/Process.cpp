@@ -86,11 +86,27 @@ void Process::generateRandomInstruction(int min, int max){
 }
 
 void Process::generateRandomMemReq(int minMem, int maxMem){
+    if (minMem <= 0 || maxMem <= 0 || minMem > maxMem){
+        std::cerr << "Invalid memory range" << std::endl;
+        return;
+    }
+
+    int minExp = std::log2(minMem);
+    int maxExp = std::log2(maxMem);
+
+    if (minExp < 0 || maxExp < 0 || minExp > maxExp){
+        std::cerr << "Invalid exponent range" << std::endl;
+        return;
+    }
+
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(minMem, maxMem);
+    std::uniform_int_distribution<> dis(minExp, maxExp);
 
-    memoryRequired = dis(gen);
+    int exp = dis(gen);
+    memoryRequired = std::pow(2, exp);
+
+    std::cout << "Process: " << this->getName() << " | Memory Req: " << memoryRequired << std::endl;
 }
 
 void Process::generateRandomPageReq(int minPage, int maxPage){

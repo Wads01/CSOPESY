@@ -107,7 +107,7 @@ void Scheduler::firstComeFirstServe(){
                 coreThreads.emplace_back([this, process, coreID](){
                     process->executeTask();
 
-                    Memory::getInstance().deallocateMemory(&process->memoryRequired);
+                    Memory::getInstance().deallocateMemory(process.get());
 
                     {
                         std::lock_guard<std::mutex> lock(queueMutex);
@@ -149,6 +149,16 @@ void Scheduler::roundRobin(int quantumCycles){
                 process->cpuCoreID = coreID;
                 runningProcesses[coreID] = process;
 
+                if (Memory::getInstance().getAllocator()->getName() == "PagingMemoryAllocator"){
+                    // Load all pages for the process
+                    auto pagingAllocator = dynamic_cast<PagingMemoryAllocator*>(Memory::getInstance().getAllocator());
+                    if (pagingAllocator && !pagingAllocator->loadPages(process.get())){
+                        process->currentState = Process::WAITING;
+                        readyQueue.push(process);
+                        continue;
+                    }
+                }
+
                 // Allocate memory and store the returned pointer in the process
                 process->allocatedMemory = Memory::getInstance().allocateMemory(process.get());
                 if (!process->allocatedMemory){
@@ -166,7 +176,7 @@ void Scheduler::roundRobin(int quantumCycles){
 
                     generateQuantumCycleTxtFile(qqCounter);
                     ++qqCounter;
-                    Memory::getInstance().deallocateMemory(process->allocatedMemory);
+                    Memory::getInstance().deallocateMemory(process.get());
 
                     {
                         std::lock_guard<std::mutex> lock(queueMutex);

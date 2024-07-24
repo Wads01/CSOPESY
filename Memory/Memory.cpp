@@ -72,13 +72,13 @@ void* Memory::allocateMemory(Process* process){
     return ptr;
 }
 
-void Memory::deallocateMemory(void* ptr){
-    if (ptr){
-        size_t deallocatedMem = allocator->deallocate(ptr);
+void Memory::deallocateMemory(Process* process){
+    if (process){
+        size_t deallocatedMem = allocator->deallocate(process);
         if (deallocatedMem > 0)
             currentOverallMemoryUsage -= deallocatedMem;
         else
-            std::cerr << "Failed to deallocate memory at pointer: " << ptr << std::endl;
+            std::cerr << "Failed to deallocate memory at pointer: " << process->getPID() << std::endl;
     }
 }
 
