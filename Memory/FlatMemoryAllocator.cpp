@@ -14,17 +14,28 @@ FlatMemoryAllocator::~FlatMemoryAllocator(){
 }
 
 void* FlatMemoryAllocator::allocate(Process* process){
+    std::lock_guard<std::mutex> lock(allocationMutex);
+
     size_t memReq = process->getMemRequired();
-    for (size_t i = 0; i <= maxSize - memReq; ++i){
-        if (canAlloc(i, memReq)){
+    for (size_t i = 0; i <= maxSize - memReq; ++i) {
+        if (canAlloc(i, memReq)) {
             allocAt(i, memReq);
-            return static_cast<void*>(&memory[i]);
+            void* allocatedPtr = static_cast<void*>(&memory[i]);
+
+            if (allocatedPtr < static_cast<void*>(memory) || allocatedPtr >= static_cast<void*>(memory + maxSize)){
+                std::cerr << "Invalid allocated pointer for process: " << process->getPID() << std::endl;
+                return nullptr;
+            }
+
+            return allocatedPtr;
         }
     }
     return nullptr;
 }
 
 size_t FlatMemoryAllocator::deallocate(Process* process){
+    std::lock_guard<std::mutex> lock(allocationMutex);
+    
     void* allocatedMemory = process->allocatedMemory;
 
     if (allocatedMemory < static_cast<void*>(memory) || allocatedMemory >= static_cast<void*>(memory + maxSize)) {

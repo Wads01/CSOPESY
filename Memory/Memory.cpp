@@ -61,6 +61,9 @@ void Memory::readConfigFile(const std::string& filename){
         allocator = std::move(pagingAllocator);
     }
 
+    // Create Backing Store text File
+    createBackingStore();
+
     file.close();
 }
 
@@ -99,6 +102,19 @@ void Memory::getInfo(){
     std::cout << "Min Page Per Process: " << minPagePerProcess << " KB" << std::endl;
     std::cout << "Max Page Per Process: " << maxPagePerProcess << " KB" << std::endl;
     std::cout << "Memory Allocator: " << allocator->getName() << std::endl;
+}
+
+void Memory::createBackingStore(){
+    std::string backingStoreFile = "backingstore.txt";
+
+    std::ifstream infile(backingStoreFile);
+    if (!infile.good()){
+        std::ofstream outfile(backingStoreFile);
+        if (!outfile)
+            throw std::runtime_error("Error creating backing store file: " + backingStoreFile);
+    }
+
+    infile.close();
 }
 
 int Memory::getMinMem() const{

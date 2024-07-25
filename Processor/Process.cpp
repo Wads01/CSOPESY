@@ -1,10 +1,3 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <thread>
-#include <chrono>
-#include <random>
-
 #include "Process.h"
 #include "../Command/PrintCommand.h"
 #include "../UI/UI_Manager.h"
@@ -77,6 +70,21 @@ void Process::executeTask(int quantumCycles){
     currentState = (currInstruction >= maxInstructions) ? Process::FINISHED : Process::RUNNING;
 }
 
+std::vector<char> Process::getPageData(size_t pageIndex) const{
+    std::lock_guard<std::mutex> lock(mutex);
+    if (pageIndex < pageData.size())
+        return pageData[pageIndex];
+    return {};
+}
+
+void Process::setPageData(size_t pageIndex, const std::vector<char>& data){
+    std::lock_guard<std::mutex> lock(mutex);
+    if (pageIndex < pageData.size())
+        pageData[pageIndex] = data;
+    else if (pageIndex == pageData.size())
+        pageData.push_back(data);
+}
+
 void Process::generateRandomInstruction(int min, int max){
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -105,8 +113,6 @@ void Process::generateRandomMemReq(int minMem, int maxMem){
 
     int exp = dis(gen);
     memoryRequired = std::pow(2, exp);
-
-    std::cout << "Process: " << this->getName() << " | Memory Req: " << memoryRequired << std::endl;
 }
 
 void Process::generateRandomPageReq(int minPage, int maxPage){

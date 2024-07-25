@@ -2,6 +2,8 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
+#include <thread>
+#include <chrono>
 #include <string>
 #include <memory>
 #include <vector>
@@ -10,7 +12,6 @@
 #include <fstream>
 #include <random>
 #include <unordered_map>
-
 
 #include "../Command/ICommand.h"
 
@@ -58,13 +59,15 @@ public:
     void generateRandomMemReq(int minMem, int maxMem);
     void generateRandomPageReq(int minPage, int maxPage);
 
+    std::vector<char> getPageData(size_t pageIndex) const;
+    void setPageData(size_t pageIndex, const std::vector<char>& data);
+
 private:
     int pid;
     std::string name;
     typedef std::vector<std::shared_ptr<ICommand>> CommandList;
     CommandList commandList;
     size_t memoryRequired;
-    std::mutex mutex;
     int commandCounter;
     int cpuCoreID = -1;
     RequirementFlags requirementFlags;
@@ -79,6 +82,10 @@ private:
     int numPage;
     int minPage;
     int maxPage;
+
+    mutable std::mutex mutex;
+    std::vector<std::vector<char>> pageData;
+    std::vector<size_t> pages;
 
     friend class ResourceEmulator;
     friend class Scheduler;

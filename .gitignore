@@ -2,3 +2,4 @@
 OS_EMULATOR.exe
 z_memLogs_z/**/*.txt
 *.o
+backingstore.txt

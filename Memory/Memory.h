@@ -45,8 +45,9 @@ private:
 
     size_t currentOverallMemoryUsage;
 
-    std::unique_ptr<IMemoryAllocator> allocator;
+    void createBackingStore();
 
+    std::unique_ptr<IMemoryAllocator> allocator;
     static Memory* sharedInstance;
 };
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <cstddef>
 #include <iostream>
+#include <mutex>
 
 #include "IMemoryAllocator.h"
 #include "../Processor/Process.h"
@@ -31,4 +32,6 @@ private:
     bool canAlloc(size_t index, size_t size) const;
     void allocAt(size_t index, size_t size);
     size_t deallocAt(size_t index);
+
+    std::mutex allocationMutex;
 };

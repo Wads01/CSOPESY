@@ -161,31 +161,46 @@ void Scheduler::roundRobin(int quantumCycles){
 
                 // Allocate memory and store the returned pointer in the process
                 process->allocatedMemory = Memory::getInstance().allocateMemory(process.get());
-                if (!process->allocatedMemory){
-                    // TEMP SOLUTION; BACKING STORE WIP
-                    process->currentState = Process::WAITING;
-                    readyQueue.push(process);
-                    continue; 
-                }
+                if (Memory::getInstance().getAllocator()->getName() == "PagingMemoryAllocator"){
+                    if (!process->allocatedMemory){
+                        // BACKING STORE w/ Random Page Replacement
+                        std::cout << "Process: " << process->getPID() << " Put Into Backing Store" << std::endl;
+                        process->currentState = Process::WAITING;
+                        runningProcesses[coreID] = nullptr;
+                        readyQueue.push(process);
+                        continue;
 
-                process->currentState = Process::RUNNING;
+                    }
+                }
+                else if (Memory::getInstance().getAllocator()->getName() == "FlatMemoryAllocator"){
+                    if (!process->allocatedMemory){
+                        // Simply push process back to queue
+                        process->currentState = Process::WAITING;
+                        runningProcesses[coreID] = nullptr;
+                        readyQueue.push(process);
+                        continue; 
+                    }
+                }
 
                 // Start a thread for executing the process
                 coreThreads.emplace_back([this, process, coreID, quantumCycles](){
+                    process->currentState = Process::RUNNING;
                     process->executeTask(quantumCycles);
 
                     generateQuantumCycleTxtFile(qqCounter);
                     ++qqCounter;
-                    Memory::getInstance().deallocateMemory(process.get());
 
                     {
                         std::lock_guard<std::mutex> lock(queueMutex);
-                        if (process->currentState == Process::FINISHED)
+                        if (process->currentState == Process::FINISHED){
                             finishedProcesses.push_back(process);
+                            Memory::getInstance().deallocateMemory(process.get());
+                        }
                         else
                         {
                             process->currentState = Process::WAITING;
                             readyQueue.push(process);
+                            Memory::getInstance().deallocateMemory(process.get());
                         }
 
                         runningProcesses[coreID] = nullptr;
@@ -245,7 +260,9 @@ void Scheduler::generateQuantumCycleTxtFile(int quantumCycle){
     size_t currentAddress = 0;
     std::vector<std::string> processEntries;
 
-    for (const auto& process : runningProcesses){
+    std::vector<std::shared_ptr<Process>> runningProcesses_ = getRunningProcesses();
+
+    for (const auto& process : runningProcesses_){
         if (process){
             ++processesInMemory;
             size_t upperLimit = currentAddress + process->getMemRequired();
