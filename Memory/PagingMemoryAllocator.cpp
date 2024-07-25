@@ -32,8 +32,13 @@ void* PagingMemoryAllocator::allocate(Process* process) {
         std::cerr << "Allocation Failed. Could not allocate frames." << std::endl;
         return nullptr;
     }
-    else
+    else{
+        // Active Memory
+        size_t activeMem = numPages * memPerPage;
+        activeMemMap.insert({processID, activeMem});
+
         return reinterpret_cast<void*>(frameIndices.front());
+    }
 }
 
 std::vector<size_t> PagingMemoryAllocator::allocateFrames(size_t numPages, size_t pageSize, size_t processID) {
@@ -75,36 +80,11 @@ size_t PagingMemoryAllocator::deallocate(Process* process){
             ++it;
     }
 
+    activeMemMap.erase(processID);
+
     return deallocatedFrames.size();
 }
 
-std::string PagingMemoryAllocator::visualizeMemory(){
-    std::lock_guard<std::mutex> lock(allocationMutex);
-
-    std::ostringstream oss;
-    oss << "Paging Memory Visualization\n";
-    oss << "Max Size: " << maxSize << " units\n";
-    oss << "Allocated Size: " << (maxSize - freeFrameList.size()) << " units\n";
-    oss << "Allocated Frames: " << frameMap.size() << "/" << maxSize << "\n";
-    oss << "Free Frames: " << freeFrameList.size() << "/" << maxSize << "\n";
-    oss << "Frame Map:\n";
-
-    // Visualize memory
-    for (size_t i = 0; i < maxSize; ++i) {
-        if (frameMap.find(i) != frameMap.end()) {
-            oss << "P" << frameMap.at(i) << " ";
-        } else {
-            oss << ". ";
-        }
-
-        // New line after every 32 frames for better readability
-        if ((i + 1) % 32 == 0) {
-            oss << "\n";
-        }
-    }
-
-    return oss.str();
-}
 size_t PagingMemoryAllocator::setPageSize(size_t memPerPage){
     // Find the smallest power of 2 greater than or equal to memPerPage
     size_t powerOfTwo = 1;
@@ -122,6 +102,15 @@ std::string PagingMemoryAllocator::getName() const{
     return "PagingMemoryAllocator";
 }
 
- size_t PagingMemoryAllocator::getTotalMemReqProc() const{
-    return totalMemReqProc;
- }
+size_t PagingMemoryAllocator::getTotalMemReqProc() const{
+return totalMemReqProc;
+}
+
+size_t PagingMemoryAllocator::getActiveMem() const{
+    size_t totalActiveMemory = 0;
+
+    for (const auto& pair : activeMemMap)
+        totalActiveMemory += pair.second;
+
+    return totalActiveMemory;
+}

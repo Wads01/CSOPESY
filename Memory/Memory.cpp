@@ -94,10 +94,6 @@ size_t Memory::getCurrentOverallMemoryUsage() const{
     return currentOverallMemoryUsage;
 }
 
-std::string Memory::visualizeMemory() const{
-    return allocator->visualizeMemory();
-}
-
 void Memory::getInfo(){
     std::cout << "Memory Configuration Information:" << std::endl;
     std::cout << "--------------------------------" << std::endl;

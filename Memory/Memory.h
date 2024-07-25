@@ -24,8 +24,6 @@ public:
     void deallocateMemory(Process* process);
 
     size_t getCurrentOverallMemoryUsage() const;
-    std::string visualizeMemory() const;
-
     int getMinMem() const;
     int getMaxMem() const;
     size_t getMaxSize() const;

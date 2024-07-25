@@ -142,9 +142,9 @@ void ProcessConsole::displaySubHeader(){
     ui.setCursorPosition(51, 5);
     std::cout << " | ";
     std::cout << "Memory Usage: ";
-    ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(usedMemory) + " KiB");
+    ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(usedMemory) + " KB");
     std::cout << " / ";
-    ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(totalMemory) + " KiB");
+    ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(totalMemory) + " KB");
     ui.setCursorPosition(100, 5);
     std::cout << " |" << std::endl;
 
@@ -194,7 +194,7 @@ void ProcessConsole::displayProcessBody(){
     for (const auto& process : runningProcesses){
         std::cout << "| ";
         std::cout << process->getName();
-        ui.setCursorPosition(15, y);
+        ui.setCursorPosition(14, y);
         std::cout << process->getTimestamp();
         ui.setCursorPosition(47, y);
         ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(process->getCpuCoreID()));
@@ -202,8 +202,8 @@ void ProcessConsole::displayProcessBody(){
         ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(process->getCurrInstructions()));
         std::cout << " / ";
         ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(process->getMaxInstructions()));
-        ui.setCursorPosition(88, y);
-        ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(process->getMemRequired()) + " KiB");
+        ui.setCursorPosition(87, y);
+        ui.setTextColor(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, std::to_string(process->getMemRequired()) + " KB");
         ui.setCursorPosition(100, y);
         std::cout << " |" << std::endl;
 

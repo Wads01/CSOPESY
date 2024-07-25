@@ -67,8 +67,10 @@ void MainConsole::processCommand(const std::string &command){
     }
     else if (command_0 == "vmstat")
     {
-        std::string memVisual = memory->visualizeMemory();
-        std::cout << memVisual << std::endl;
+        if(memory->getAllocator()->getName() == "PagingMemoryAllocator")
+            vmStat();
+        else
+            std::cout << "NOTICE: This Command Is Only Exclusive To Paging Allocator." << std::endl;
     }
     else if (command_0 == "view-config")
     {
@@ -278,6 +280,38 @@ void MainConsole::printDetails(){
     std::cout << "Available Number of Commands: 13" << std::endl;
     std::cout << "Current Time: " << ui.generateTimestamp() << std::endl;
     std::cout << "----------------------------------------" << std::endl;
+}
+
+void MainConsole::vmStat(){
+    UI_Manager& ui = UI_Manager::getInstance();
+    auto pagingAllocator = dynamic_cast<PagingMemoryAllocator*>(memory->getAllocator());
+    
+    size_t totalMemory = memory->getMaxSize();
+    size_t usedMemory = memory->getCurrentOverallMemoryUsage();
+    size_t activeMemory = pagingAllocator->getActiveMem();
+    size_t inactiveMemory = totalMemory - activeMemory;
+    int idleTicks = scheduler->idleCPUTicks;
+    int activeTicks = scheduler->activeCPUTicks;
+    int totalTicks = idleTicks + activeTicks;
+    int numPagedIn = scheduler->numPagedIn;
+    int numPagedOut = scheduler->numPagedOut;
+
+
+    std::cout << "+----------------------------------------+" << std::endl;
+    std::cout << "|              VM STATISTICS             |" << std::endl;
+    std::cout << "+----------------------------------------+" << std::endl;
+    std::cout << " Timestamp: " << ui.generateTimestamp() << std::endl;
+    std::cout << "      Total Memory:           " << totalMemory << " KB" << std::endl;
+    std::cout << "      Used Memory:            " << usedMemory << " KB" << std::endl;
+    std::cout << "      Active Memory:          " << activeMemory << " KB" << std::endl;
+    std::cout << "      Inactive Memory:        " << inactiveMemory << " KB" << std::endl;
+    std::cout << "      Total CPU Ticks:        " << totalTicks << std::endl;
+    std::cout << "      Active CPU Ticks:       " << activeTicks << std::endl;
+    std::cout << "      Idle CPU Ticks:         " << idleTicks << std::endl;
+    std::cout << "      Pages In:               " << numPagedIn << std::endl;
+    std::cout << "      Pages Out:              " << numPagedOut << std::endl;
+    std::cout << std::endl;
+    std::cout << "+----------------------------------------+" << std::endl;
 }
 
 MainConsole::~MainConsole(){

@@ -24,11 +24,11 @@ public:
 
     void* allocate(Process* process) override;
     size_t deallocate(Process* process) override;
-    std::string visualizeMemory() override;
 
     size_t getMaxSize() const override;
     std::string getName() const override;
     size_t getTotalMemReqProc() const;
+    size_t getActiveMem() const;
 
 
     void writePageToBackingStore(int processID, int pageNumber, const std::vector<char>& pageData);
@@ -39,7 +39,9 @@ private:
     std::mutex backingStoreMutex;
 
     size_t maxSize;
+    size_t activeMem;
     size_t totalMemReqProc;
+    std::unordered_map<size_t, size_t> activeMemMap;
     std::unordered_map<size_t, size_t> frameMap;
     std::vector<size_t> freeFrameList;
 

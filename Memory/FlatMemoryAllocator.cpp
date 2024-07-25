@@ -88,10 +88,6 @@ size_t FlatMemoryAllocator::deallocAt(size_t index){
     return size;
 }
 
-std::string FlatMemoryAllocator::visualizeMemory(){
-    return std::string(memory, memory + maxSize);
-}
-
 size_t FlatMemoryAllocator::getMaxSize() const{
     return maxSize;
 }

@@ -6,15 +6,13 @@
 Scheduler* Scheduler::sharedInstance = nullptr;
 int Scheduler::qqCounter = 0;
 
-Scheduler::Scheduler() :
-      schedulerAlgorithm("NULL"), 
-      quantumCycles(0), 
-      batchProcessFrequency(0),
-      minInstructions(0),
-      maxInstructions(0),
-      delaysPerExecution(0),
-      numCores(0),
-      running(true) {
+Scheduler::Scheduler() : schedulerAlgorithm("NULL"), quantumCycles(0), batchProcessFrequency(0),
+    minInstructions(0), maxInstructions(0), delaysPerExecution(0), numCores(0),
+    running(true){
+    activeCPUTicks = 0;
+    idleCPUTicks = 0;
+    numPagedIn = 0;
+    numPagedOut = 0;
     runningProcesses.resize(numCores, nullptr);
 }
 
@@ -83,7 +81,12 @@ void Scheduler::firstComeFirstServe(){
         std::unique_lock<std::mutex> lock(queueMutex);
 
         // Wait for processes or termination signal
-        processCV.wait(lock, [this] { return !readyQueue.empty() || !running; });
+        if (readyQueue.empty()){
+            ++idleCPUTicks;
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
 
         // Assign processes to available cores
         for (int coreID = 0; coreID < numCores; ++coreID){
@@ -94,28 +97,28 @@ void Scheduler::firstComeFirstServe(){
                 runningProcesses[coreID] = process;
 
                 if (!Memory::getInstance().allocateMemory(process.get())){
-                    // TEMP SOLUTION; BACKING STORE WIP
-                    std::cerr << "Memory allocation failed for process " << process->getPID() << std::endl;
                     process->currentState = Process::WAITING;
+                    runningProcesses[coreID] = nullptr;
                     readyQueue.push(process);
                     continue;
                 }
 
-                process->currentState = Process::RUNNING;
-
                 // Start a thread for executing the process
+                ++activeCPUTicks;
                 coreThreads.emplace_back([this, process, coreID](){
+                    process->currentState = Process::RUNNING;
                     process->executeTask();
-
-                    Memory::getInstance().deallocateMemory(process.get());
 
                     {
                         std::lock_guard<std::mutex> lock(queueMutex);
-                        if (process->currentState == Process::FINISHED)
+                        if (process->currentState == Process::FINISHED){
                             finishedProcesses.push_back(process);
+                            Memory::getInstance().deallocateMemory(process.get());
+                        }
                         else{
                             process->currentState = Process::WAITING;
                             readyQueue.push(process);
+                            Memory::getInstance().deallocateMemory(process.get());
                         }
 
                         runningProcesses[coreID] = nullptr;
@@ -137,9 +140,12 @@ void Scheduler::roundRobin(int quantumCycles){
     while (running){
         std::unique_lock<std::mutex> lock(queueMutex);
 
-        // Wait for processes or termination signal
-        processCV.wait(lock, [this] { return !readyQueue.empty() || !running; });
-
+        if (readyQueue.empty()){
+            ++idleCPUTicks;
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
 
         // Assign processes to available cores
         for (int coreID = 0; coreID < numCores; ++coreID){
@@ -158,8 +164,8 @@ void Scheduler::roundRobin(int quantumCycles){
                         runningProcesses[coreID] = nullptr;
                         readyQueue.push(process);
                         continue;
-
                     }
+                    numPagedIn += process->getNumPage();
                 }
                 else if (Memory::getInstance().getAllocator()->getName() == "FlatMemoryAllocator"){
                     if (!process->allocatedMemory){
@@ -172,6 +178,7 @@ void Scheduler::roundRobin(int quantumCycles){
                 }
 
                 // Start a thread for executing the process
+                ++activeCPUTicks;
                 coreThreads.emplace_back([this, process, coreID, quantumCycles](){
                     process->currentState = Process::RUNNING;
                     process->executeTask(quantumCycles);
@@ -181,15 +188,21 @@ void Scheduler::roundRobin(int quantumCycles){
 
                     {
                         std::lock_guard<std::mutex> lock(queueMutex);
-                        if (process->currentState == Process::FINISHED){
+
+                        if (process->currentState == Process::FINISHED)
+                        {
                             finishedProcesses.push_back(process);
+
                             Memory::getInstance().deallocateMemory(process.get());
+                            numPagedOut += process->getNumPage();
                         }
                         else
                         {
                             process->currentState = Process::WAITING;
                             readyQueue.push(process);
+                            
                             Memory::getInstance().deallocateMemory(process.get());
+                            numPagedOut += process->getNumPage();
                         }
 
                         runningProcesses[coreID] = nullptr;
@@ -200,7 +213,6 @@ void Scheduler::roundRobin(int quantumCycles){
         }
 
         lock.unlock();
-
         std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(delaysPerExecution * 1000))); //Delays Per Execution
     }
 

@@ -43,6 +43,10 @@ public:
     void getInfo();
     void readConfigFile(const std::string& filename);
 
+    int numPagedIn;
+    int numPagedOut;
+    int activeCPUTicks;
+    int idleCPUTicks;
     static int qqCounter;
     void generateQuantumCycleTxtFile(int quantumCycle);
 

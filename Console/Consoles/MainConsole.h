@@ -22,6 +22,7 @@ public:
     void printDetails();
     void schedulerStart();
     void schedulerStop();
+    void vmStat();
 
     int secondsToMilliseconds(double seconds);
 

@@ -17,7 +17,7 @@ public:
 
     void* allocate(Process* process) override;
     size_t deallocate(Process* process) override;
-    std::string visualizeMemory() override;
+    
     size_t getMaxSize() const override;
     size_t getAllocatedSize() const;
     std::string getName() const;
