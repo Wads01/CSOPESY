@@ -121,6 +121,8 @@ void Process::generateRandomPageReq(int minPage, int maxPage){
     std::uniform_int_distribution<> dis(minPage, maxPage);
 
     numPage = dis(gen);
+    
+    memPerPage = memoryRequired / numPage;
 }
 
 int Process::getPID() const{
@@ -157,6 +159,10 @@ int Process::getCurrInstructions() const{
 
 size_t Process::getMemRequired() const{
     return memoryRequired;
+}
+
+size_t Process::getMemPerPage() const{
+    return memPerPage;
 }
 
 int Process::getNumPage() const{

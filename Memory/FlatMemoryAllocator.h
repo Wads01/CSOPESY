@@ -23,6 +23,7 @@ public:
     std::string getName() const;
 
 private:
+    size_t allocatedAmount;
     size_t maxSize;
     size_t allocatedSize;
     char* memory;

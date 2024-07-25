@@ -26,31 +26,25 @@ public:
     size_t deallocate(Process* process) override;
     std::string visualizeMemory() override;
 
-    void writePageToBackingStore(int processID, int pageNumber, const std::vector<char>& pageData);
-    std::optional<std::vector<char>> loadPageFromBackingStore(int processID, int pageNumber, size_t pageSize);
-
     size_t getMaxSize() const override;
     std::string getName() const override;
+    size_t getTotalMemReqProc() const;
 
-    void setMinPageCount(int minPageCount);
-    void setMaxPageCount(int maxPageCount);
+
+    void writePageToBackingStore(int processID, int pageNumber, const std::vector<char>& pageData);
+    std::optional<std::vector<char>> loadPageFromBackingStore(int processID, int pageNumber, size_t pageSize);
     
-    bool loadPages(Process* process);
-
 private:
-    int minPageCount;
-    int maxPageCount;
-
-    size_t maxSize;
-    size_t numFrames;
-    std::unordered_map<size_t, size_t> frameMap;
-    std::vector<size_t> freeFrameList;
-    
     std::mutex allocationMutex;
     std::mutex backingStoreMutex;
-    size_t allocateFrames(size_t numFrames, size_t processID);
-    void deallocateFrames(size_t numFrames, size_t frameIndex);
-    std::unordered_map<size_t, std::vector<char>> frameDataMap;
+
+    size_t maxSize;
+    size_t totalMemReqProc;
+    std::unordered_map<size_t, size_t> frameMap;
+    std::vector<size_t> freeFrameList;
+
+    size_t setPageSize(size_t memPerPage);
+    std::vector<size_t> allocateFrames(size_t numPages, size_t memPerPage, size_t processID);
 };
 
 #endif

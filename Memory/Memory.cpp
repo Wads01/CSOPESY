@@ -54,12 +54,8 @@ void Memory::readConfigFile(const std::string& filename){
 
     if(minPagePerProcess == 1 && maxPagePerProcess == 1)
         allocator = std::make_unique<FlatMemoryAllocator>(maxOverallMemory);
-    else{
-        auto pagingAllocator = std::make_unique<PagingMemoryAllocator>(maxOverallMemory);
-        pagingAllocator->setMinPageCount(minPagePerProcess);
-        pagingAllocator->setMaxPageCount(maxPagePerProcess);
-        allocator = std::move(pagingAllocator);
-    }
+    else
+        allocator = std::make_unique<PagingMemoryAllocator>(maxOverallMemory);
 
     // Create Backing Store text File
     createBackingStore();
@@ -69,8 +65,17 @@ void Memory::readConfigFile(const std::string& filename){
 
 void* Memory::allocateMemory(Process* process){
     void* ptr = allocator->allocate(process);
-    if(ptr)
-        currentOverallMemoryUsage += process->getMemRequired();
+
+    if(allocator->getName() == "FlatMemoryAllocator"){
+        if(ptr)
+            currentOverallMemoryUsage += process->getMemRequired();
+    }
+    else if (allocator->getName() == "PagingMemoryAllocator"){
+        if(ptr){
+            auto pagingAllocator = dynamic_cast<PagingMemoryAllocator*>(getAllocator());
+            currentOverallMemoryUsage += pagingAllocator->getTotalMemReqProc();
+        }
+    }
 
     return ptr;
 }

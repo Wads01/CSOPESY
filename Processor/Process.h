@@ -47,6 +47,7 @@ public:
     int getMaxInstructions() const;
     int getCurrInstructions() const;
     size_t getMemRequired() const;
+    size_t getMemPerPage() const;
     int getNumPage() const;
     ProcessState getProcessState() const;
     void* allocatedMemory = nullptr;
@@ -82,6 +83,7 @@ private:
     int numPage;
     int minPage;
     int maxPage;
+    size_t memPerPage;
 
     mutable std::mutex mutex;
     std::vector<std::vector<char>> pageData;

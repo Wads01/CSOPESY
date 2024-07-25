@@ -149,22 +149,11 @@ void Scheduler::roundRobin(int quantumCycles){
                 process->cpuCoreID = coreID;
                 runningProcesses[coreID] = process;
 
-                if (Memory::getInstance().getAllocator()->getName() == "PagingMemoryAllocator"){
-                    // Load all pages for the process
-                    auto pagingAllocator = dynamic_cast<PagingMemoryAllocator*>(Memory::getInstance().getAllocator());
-                    if (pagingAllocator && !pagingAllocator->loadPages(process.get())){
-                        process->currentState = Process::WAITING;
-                        readyQueue.push(process);
-                        continue;
-                    }
-                }
-
                 // Allocate memory and store the returned pointer in the process
                 process->allocatedMemory = Memory::getInstance().allocateMemory(process.get());
                 if (Memory::getInstance().getAllocator()->getName() == "PagingMemoryAllocator"){
                     if (!process->allocatedMemory){
                         // BACKING STORE w/ Random Page Replacement
-                        std::cout << "Process: " << process->getPID() << " Put Into Backing Store" << std::endl;
                         process->currentState = Process::WAITING;
                         runningProcesses[coreID] = nullptr;
                         readyQueue.push(process);

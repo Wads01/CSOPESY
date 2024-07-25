@@ -1,144 +1,117 @@
 #include <new>
+#include <cmath>
 #include <cstring>
 
 #include "PagingMemoryAllocator.h"
 
-
-PagingMemoryAllocator::PagingMemoryAllocator(size_t maxSize) : maxSize(maxSize), numFrames(maxSize){
-    for(size_t i = 0; i < numFrames; i++)
+PagingMemoryAllocator::PagingMemoryAllocator(size_t maxSize) : maxSize(maxSize){
+    for (size_t i = 0; i < maxSize; ++i) 
         freeFrameList.push_back(i);
 }
 
-PagingMemoryAllocator::~PagingMemoryAllocator(){}
+PagingMemoryAllocator::~PagingMemoryAllocator() {}
 
-void* PagingMemoryAllocator::allocate(Process* process){
+void* PagingMemoryAllocator::allocate(Process* process) {
     std::lock_guard<std::mutex> lock(allocationMutex);
 
     size_t processID = process->getPID();
-    size_t numFramesNeeded = process->getNumPage();
+    size_t numPages = process->getNumPage();
+    size_t memPerPage = process->getMemPerPage();
 
-    if(numFramesNeeded > freeFrameList.size()){
-        std::cerr << "Allocation Failed. Not Enough Free Frames." << std::endl;
+    // Determine Page Size Depending on memPerPage
+    size_t pageSize = setPageSize(memPerPage);
+
+    totalMemReqProc = numPages * pageSize;
+
+    if (totalMemReqProc > freeFrameList.size())
+        return nullptr;
+
+    std::vector<size_t> frameIndices = allocateFrames(numPages, pageSize, processID);
+
+    if (frameIndices.empty()){
+        std::cerr << "Allocation Failed. Could not allocate frames." << std::endl;
         return nullptr;
     }
+    else
+        return reinterpret_cast<void*>(frameIndices.front());
+}
 
-    size_t frameIndex = allocateFrames(numFramesNeeded, processID);
+std::vector<size_t> PagingMemoryAllocator::allocateFrames(size_t numPages, size_t pageSize, size_t processID) {
+    std::vector<size_t> allocatedFrames;
 
-    return reinterpret_cast<void*>(frameIndex);
+    for (size_t i = 0; i < numPages; ++i){
+        for (size_t j = 0; j < pageSize; ++j){
+            if (freeFrameList.empty()){
+                std::cerr << "Error: Not enough free frames available." << std::endl;
+                return {};
+            }
+
+            size_t frameIndex = freeFrameList.back();
+            freeFrameList.pop_back();
+            frameMap[frameIndex] = processID;
+
+            allocatedFrames.push_back(frameIndex);
+        }
+    }
+
+    return allocatedFrames;
 }
 
 size_t PagingMemoryAllocator::deallocate(Process* process){
     std::lock_guard<std::mutex> lock(allocationMutex);
 
-
     size_t processID = process->getPID();
+    std::vector<size_t> deallocatedFrames;
+    auto it = frameMap.begin();
 
-    auto it = std::find_if(frameMap.begin(), frameMap.end(), [processID](const auto& entry){
-        return entry.second == processID;
-    });
-
-
-    while (it != frameMap.end()) {
-        size_t frameIndex = it->first;
-        deallocateFrames(1, frameIndex);
-        it = std::find_if(frameMap.begin(), frameMap.end(), [processID](const auto& entry){
-            return entry.second == processID;
-        });
+    while (it != frameMap.end()){
+        if (it->second == processID){
+            size_t frameIndex = it->first;
+            freeFrameList.push_back(frameIndex);
+            deallocatedFrames.push_back(frameIndex);
+            it = frameMap.erase(it);
+        }
+        else
+            ++it;
     }
 
-    return process->getMemRequired();
+    return deallocatedFrames.size();
 }
 
 std::string PagingMemoryAllocator::visualizeMemory(){
+    std::lock_guard<std::mutex> lock(allocationMutex);
+
     std::ostringstream oss;
     oss << "Paging Memory Visualization\n";
-    oss << "Max Size: " << maxSize << " KB\n";
-    oss << "Allocated Size: " << (numFrames - freeFrameList.size()) << " KB\n";
-    oss << "Free Frames: " << freeFrameList.size() << "/" << numFrames << "\n";
-    oss << "Allocated Frames: " << (numFrames - freeFrameList.size()) << "/" << numFrames << "\n";
+    oss << "Max Size: " << maxSize << " units\n";
+    oss << "Allocated Size: " << (maxSize - freeFrameList.size()) << " units\n";
+    oss << "Allocated Frames: " << frameMap.size() << "/" << maxSize << "\n";
+    oss << "Free Frames: " << freeFrameList.size() << "/" << maxSize << "\n";
+    oss << "Frame Map:\n";
 
-    return oss.str();
-}
-
-size_t PagingMemoryAllocator::allocateFrames(size_t numFrames, size_t processID){
-    std::vector<size_t> allocatedFrames;
-
-    for (size_t i = 0; i < numFrames; ++i) {
-        size_t frameIndex = freeFrameList.back();
-        freeFrameList.pop_back();
-        frameMap[frameIndex] = processID;
-        allocatedFrames.push_back(frameIndex);
-    }
-
-    return allocatedFrames.front();
-
-}
-
-void PagingMemoryAllocator::deallocateFrames(size_t numFrames, size_t frameIndex){
-    for(size_t i = 0; i < numFrames; ++i)
-        frameMap.erase(frameIndex + i);
-
-    for(size_t i = 0; i < numFrames; ++i)
-        freeFrameList.push_back(frameIndex + i);
-}
-
-bool PagingMemoryAllocator::loadPages(Process* process){
-    size_t processID = process->getPID();
-    size_t numPages = process->getNumPage();
-
-    if (numPages > freeFrameList.size()){
-        std::cerr << "Loading Pages Failed. Not Enough Free Frames." << std::endl;
-        return false;
-    }
-
-    for (size_t i = 0; i < numPages; ++i) {
-        size_t frameIndex = freeFrameList.back();
-        freeFrameList.pop_back();
-        frameMap[frameIndex] = processID;
-    }
-
-    return true;
-}
-
-void PagingMemoryAllocator::writePageToBackingStore(int processID, int pageNumber, const std::vector<char>& pageData){
-    std::ofstream outfile("backingstore.txt", std::ios::app | std::ios::binary);
-    if (!outfile.is_open()) {
-        std::cerr << "Error opening backing store for writing" << std::endl;
-        return;
-    }
-
-    outfile.write(reinterpret_cast<const char*>(&processID), sizeof(processID));
-    outfile.write(reinterpret_cast<const char*>(&pageNumber), sizeof(pageNumber));
-    outfile.write(pageData.data(), pageData.size());
-
-    outfile.close();
-}
-
-std::optional<std::vector<char>> readPageFromBackingStore(int processID, int pageNumber, size_t pageSize){
-    std::ifstream infile("backingstore.txt", std::ios::in | std::ios::binary);
-    if (!infile.is_open()) {
-        std::cerr << "Error opening backing store for reading" << std::endl;
-        return std::nullopt;
-    }
-
-    while (infile) {
-        int storedProcessID;
-        int storedPageNumber;
-        infile.read(reinterpret_cast<char*>(&storedProcessID), sizeof(storedProcessID));
-        infile.read(reinterpret_cast<char*>(&storedPageNumber), sizeof(storedPageNumber));
-
-        if (infile && storedProcessID == processID && storedPageNumber == pageNumber) {
-            std::vector<char> pageData(pageSize);
-            infile.read(pageData.data(), pageSize);
-            infile.close();
-            return pageData;
+    // Visualize memory
+    for (size_t i = 0; i < maxSize; ++i) {
+        if (frameMap.find(i) != frameMap.end()) {
+            oss << "P" << frameMap.at(i) << " ";
         } else {
-            infile.ignore(pageSize);
+            oss << ". ";
+        }
+
+        // New line after every 32 frames for better readability
+        if ((i + 1) % 32 == 0) {
+            oss << "\n";
         }
     }
 
-    infile.close();
-    return std::nullopt;
+    return oss.str();
+}
+size_t PagingMemoryAllocator::setPageSize(size_t memPerPage){
+    // Find the smallest power of 2 greater than or equal to memPerPage
+    size_t powerOfTwo = 1;
+    while (powerOfTwo < memPerPage)
+        powerOfTwo *= 2;
+
+    return powerOfTwo;
 }
 
 size_t PagingMemoryAllocator::getMaxSize() const{
@@ -149,10 +122,6 @@ std::string PagingMemoryAllocator::getName() const{
     return "PagingMemoryAllocator";
 }
 
-void PagingMemoryAllocator::setMinPageCount(int minPageCount){
-    this->minPageCount = minPageCount;
-}
-
-void PagingMemoryAllocator::setMaxPageCount(int maxPageCount){
-    this->maxPageCount = maxPageCount;
-}
+ size_t PagingMemoryAllocator::getTotalMemReqProc() const{
+    return totalMemReqProc;
+ }
