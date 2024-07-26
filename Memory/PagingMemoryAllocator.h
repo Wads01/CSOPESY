@@ -16,6 +16,7 @@
 
 #include "IMemoryAllocator.h"
 #include "../Processor/Process.h"
+#include "../UI/UI_Manager.h"
 
 class PagingMemoryAllocator : public IMemoryAllocator {
 public:
@@ -31,8 +32,8 @@ public:
     size_t getActiveMem() const;
 
 
-    void writePageToBackingStore(int processID, int pageNumber, const std::vector<char>& pageData);
-    std::optional<std::vector<char>> loadPageFromBackingStore(int processID, int pageNumber, size_t pageSize);
+    void writeProcessToBackingStore(Process* ProcessIN, Process* ProcessOUT);
+    void readProcessFromBackingStore(Process* process);
     
 private:
     std::mutex allocationMutex;

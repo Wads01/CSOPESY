@@ -64,7 +64,9 @@ Type 'exit' to quit, 'clear' to clear the screen.
 void UI_Manager::printMainCommandList(){
     cout <<
 R"(
-List of all possible commands.
+====================================================================================================
+                                    List of all possible commands
+----------------------------------------------------------------------------------------------------
 'exit'                          ->      Terminates the program.
 'clear'                         ->      Clears the screen except the header.
 'marquee'                       ->      Displays a marquee animation with keyboard polling.
@@ -79,6 +81,8 @@ List of all possible commands.
 'process-smi'                   ->      View of the memory allocation and utilization of processors
 'view-config'                   ->      Views the configuration of the scheduler and memory.
 'vmstat'                        ->      More detailed view on the paging allocator.
+====================================================================================================
+
 )";
 }
 

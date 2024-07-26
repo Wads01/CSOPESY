@@ -105,17 +105,22 @@ void Memory::getInfo(){
     std::cout << "Memory Allocator: " << allocator->getName() << std::endl;
 }
 
-void Memory::createBackingStore(){
+void Memory::createBackingStore() {
     std::string backingStoreFile = "backingstore.txt";
+    std::string backingStoreFileLog = "backingstore_log.txt";
 
-    std::ifstream infile(backingStoreFile);
-    if (!infile.good()){
-        std::ofstream outfile(backingStoreFile);
-        if (!outfile)
-            throw std::runtime_error("Error creating backing store file: " + backingStoreFile);
-    }
+    auto createFileIfNotExist = [](const std::string& filename){
+        std::ifstream infile(filename);
+        if (!infile.good()){
+            std::ofstream outfile(filename);
+            if (!outfile)
+                throw std::runtime_error("Error creating backing store file: " + filename);
+        }
+        infile.close();
+    };
 
-    infile.close();
+    createFileIfNotExist(backingStoreFile);
+    createFileIfNotExist(backingStoreFileLog);
 }
 
 int Memory::getMinMem() const{

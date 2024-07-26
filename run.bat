@@ -28,8 +28,10 @@ g++ main.o UI_Manager.o CommandProcessor.o Process.o Scheduler.o ConsoleManager.
 rem Delete all .o files
 del *.o
 
-rem Delete all .txt files in the z_memLogs_z folder
+rem Delete .txt files
 del /q z_memLogs_z\*.txt
+del backingstore.txt
+del backingstore_log.txt
 
 rem run the executable
 OS_EMULATOR.exe

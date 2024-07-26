@@ -301,6 +301,7 @@ void MainConsole::vmStat(){
     std::cout << "|              VM STATISTICS             |" << std::endl;
     std::cout << "+----------------------------------------+" << std::endl;
     std::cout << " Timestamp: " << ui.generateTimestamp() << std::endl;
+    std::cout << std::endl;
     std::cout << "      Total Memory:           " << totalMemory << " KB" << std::endl;
     std::cout << "      Used Memory:            " << usedMemory << " KB" << std::endl;
     std::cout << "      Active Memory:          " << activeMemory << " KB" << std::endl;

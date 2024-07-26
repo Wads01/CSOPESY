@@ -9,6 +9,8 @@ int Scheduler::qqCounter = 0;
 Scheduler::Scheduler() : schedulerAlgorithm("NULL"), quantumCycles(0), batchProcessFrequency(0),
     minInstructions(0), maxInstructions(0), delaysPerExecution(0), numCores(0),
     running(true){
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
     activeCPUTicks = 0;
     idleCPUTicks = 0;
     numPagedIn = 0;
@@ -159,7 +161,14 @@ void Scheduler::roundRobin(int quantumCycles){
                 process->allocatedMemory = Memory::getInstance().allocateMemory(process.get());
                 if (Memory::getInstance().getAllocator()->getName() == "PagingMemoryAllocator"){
                     if (!process->allocatedMemory){
-                        // BACKING STORE w/ Random Page Replacement
+                        auto pagingAllocator = dynamic_cast<PagingMemoryAllocator*>(memory->getAllocator());
+                        Process* processToSwapOut = selectRandomProcessToSwapOut();
+
+                        if (processToSwapOut){
+                            pagingAllocator->writeProcessToBackingStore(process.get(), processToSwapOut);
+                            pagingAllocator->readProcessFromBackingStore(process.get());
+                        }
+                        
                         process->currentState = Process::WAITING;
                         runningProcesses[coreID] = nullptr;
                         readyQueue.push(process);
@@ -250,6 +259,22 @@ void Scheduler::readConfigFile(const std::string& filename){
     }
 
     file.close();
+}
+
+Process* Scheduler::selectRandomProcessToSwapOut(){
+    std::vector<Process*> candidates;
+
+    for (const auto& process : runningProcesses){
+        if (process != nullptr && process->currentState == Process::RUNNING)
+            candidates.push_back(process.get());
+    }
+
+    if (candidates.empty())
+        return nullptr;
+
+    size_t randomIndex = std::rand() % candidates.size();
+    
+    return candidates[randomIndex];
 }
 
 void Scheduler::generateQuantumCycleTxtFile(int quantumCycle){
@@ -346,6 +371,7 @@ std::vector<std::shared_ptr<Process>> Scheduler::getRunningProcesses() const{
             running.push_back(process);
         }
     }
+
     return running;
 }
 

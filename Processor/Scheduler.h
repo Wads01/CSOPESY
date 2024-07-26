@@ -2,6 +2,8 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
+#include <cstdlib>
+#include <memory>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -72,14 +74,17 @@ private:
     std::vector<std::thread> coreThreads;
     std::vector<std::shared_ptr<Process>> runningProcesses;
     std::vector<std::shared_ptr<Process>> finishedProcesses;
+
     std::mutex processMutex;
     mutable std::mutex queueMutex;
+    
     int numCores;
     bool running;
     bool createProcess;
 
-    Memory* memory;
+    Process* selectRandomProcessToSwapOut();
 
+    Memory* memory;
     static Scheduler* sharedInstance;
 };
 

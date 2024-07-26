@@ -94,6 +94,60 @@ size_t PagingMemoryAllocator::setPageSize(size_t memPerPage){
     return powerOfTwo;
 }
 
+void PagingMemoryAllocator::writeProcessToBackingStore(Process* processIN, Process* processOUT){
+    std::lock_guard<std::mutex> lock(backingStoreMutex);
+
+    std::ofstream backingStoreFile("backingstore.txt", std::ios_base::app);
+
+    if (!backingStoreFile.is_open()) {
+        std::cerr << "Error opening backing store file." << std::endl;
+        return;
+    }
+
+    UI_Manager& ui = UI_Manager::getInstance();
+
+    backingStoreFile << "========================================" << std::endl;
+    backingStoreFile << "Timestamp: " << ui.generateTimestamp() << std::endl;
+    backingStoreFile << "----------------------------------------" << std::endl;
+
+    backingStoreFile << "IN" << std::endl;
+    backingStoreFile << std::endl;
+    backingStoreFile << "Name: " << processIN->getName() << std::endl;
+    backingStoreFile << "Core: " << processIN->getCpuCoreID() << std::endl;
+    backingStoreFile << "Current Instruction: " << processIN->getCurrInstructions() << std::endl;
+    backingStoreFile << "Memory Usage: " << processIN->getMemRequired() << " KB" << std::endl;
+    backingStoreFile << "----------------------------------------" << std::endl;
+
+    backingStoreFile << "OUT" << std::endl;
+    backingStoreFile << std::endl;
+    backingStoreFile << "Name: " << processOUT->getName() << std::endl;
+    backingStoreFile << "Core: " << processOUT->getCpuCoreID() << std::endl;
+    backingStoreFile << "Current Instruction: " << processOUT->getCurrInstructions() << std::endl;
+    backingStoreFile << "Memory Usage: " << processOUT->getMemRequired() << " KB" << std::endl;
+    backingStoreFile << "----------------------------------------" << std::endl;
+
+    backingStoreFile.close();
+
+}
+
+void PagingMemoryAllocator::readProcessFromBackingStore(Process* process){
+    std::lock_guard<std::mutex> lock(backingStoreMutex);
+
+    std::ofstream logFile("backingstore_log.txt", std::ios::app);
+    UI_Manager& ui = UI_Manager::getInstance();
+
+    if (logFile.is_open()){
+        logFile << "========================================" << std::endl;
+        logFile << "Timestamp: " << ui.generateTimestamp() << std::endl;
+        logFile << "Process read from backing store: " << process->getName() << std::endl;
+        logFile << "========================================" << std::endl;
+
+        logFile.close();
+    }
+    else
+        std::cerr << "Unable to open log file for reading from backing store." << std::endl;
+}
+
 size_t PagingMemoryAllocator::getMaxSize() const{
     return maxSize;
 }
