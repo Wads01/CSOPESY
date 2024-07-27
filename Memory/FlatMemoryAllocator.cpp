@@ -17,7 +17,7 @@ void* FlatMemoryAllocator::allocate(Process* process){
     std::lock_guard<std::mutex> lock(allocationMutex);
 
     size_t memReq = process->getMemRequired();
-    for (size_t i = 0; i <= maxSize - memReq; ++i) {
+    for (size_t i = 0; i <= maxSize - memReq + 1; ++i) {
         if (canAlloc(i, memReq)) {
             allocAt(i, memReq);
             void* allocatedPtr = static_cast<void*>(&memory[i]);
@@ -26,7 +26,9 @@ void* FlatMemoryAllocator::allocate(Process* process){
                 std::cerr << "Invalid allocated pointer for process: " << process->getPID() << std::endl;
                 return nullptr;
             }
-
+            
+            process->allocatedMemory = allocatedPtr;
+            
             return allocatedPtr;
         }
     }
@@ -38,13 +40,14 @@ size_t FlatMemoryAllocator::deallocate(Process* process){
     
     void* allocatedMemory = process->allocatedMemory;
 
-    if (allocatedMemory < static_cast<void*>(memory) || allocatedMemory >= static_cast<void*>(memory + maxSize)) {
+    if (allocatedMemory < static_cast<void*>(memory) || allocatedMemory >= static_cast<void*>(memory + maxSize)){
         std::cerr << "Pointer out of bounds for process: " << process->getPID() << std::endl;
+        std::cerr << "Allocated Memory: " << allocatedMemory << " | Memory: " << static_cast<void*>(memory) << " | " << static_cast<void*>(memory + maxSize) << std::endl;
         return 0;
     }
 
     auto it = allocationSizes.find(allocatedMemory);
-    if (it == allocationSizes.end()) {
+    if (it == allocationSizes.end()){
         std::cerr << "Invalid deallocation attempt for process: " << process->getPID() << std::endl;
         return 0;
     }

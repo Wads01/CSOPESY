@@ -33,8 +33,9 @@ void ProcessConsole::display(){
 void ProcessConsole::process(){
     while(running){
         std::string command;
+        std::cout << std::endl;
         std::cout << "Type 'refresh' to see updates every now and then." << std::endl;
-        std::cout << std::endl << "root:\\>";
+        std::cout << "root:\\>";
         std::getline(std::cin, command);
         processCommand(command);
     }
