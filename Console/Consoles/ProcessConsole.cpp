@@ -33,6 +33,7 @@ void ProcessConsole::display(){
 void ProcessConsole::process(){
     while(running){
         std::string command;
+        std::cout << "Type 'refresh' to see updates every now and then." << std::endl;
         std::cout << std::endl << "root:\\>";
         std::getline(std::cin, command);
         processCommand(command);
@@ -55,7 +56,7 @@ void ProcessConsole::processCommand(const std::string &command){
         running = false;
         consoleManager->switchConsole(MAIN_CONSOLE);
     }
-    else if (command_0 == "clear")
+    else if (command_0 == "refresh")
     {
         ui.clear();
         onEnabled();
