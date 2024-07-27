@@ -103,6 +103,7 @@ void MainConsole::processCommand(const std::string &command){
                 if (consoleManager->registerScreen(newScreen)){
                     std::cout << "Screen Name: '" << tokens[2] << "' successfully created." << std::endl;
                     consoleManager->switchConsole(tokens[2]);
+                    scheduler->addProcess(newProcess);
 
                     ui.clear();
                     onEnabled();
