@@ -37,7 +37,7 @@ public:
     int getMaxMem() const;
     int getMinPage() const;
     int getMaxPage() const;
-    std::vector<std::shared_ptr<Process>> getRunningProcesses() const;
+    std::vector<std::shared_ptr<Process>> getRunningProcesses();
     std::vector<std::shared_ptr<Process>> getFinishedProcesses() const;
 
     void setMemory(Memory& mem);

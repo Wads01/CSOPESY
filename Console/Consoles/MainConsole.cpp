@@ -189,7 +189,6 @@ void MainConsole::schedulerStart(){
     ConsoleManager* consoleManager = ConsoleManager::getInstance();
 
     while(runScheduler){
-
         int pid = ui.generatePID();
         Process::RequirementFlags reqFlags = { true, 1, true, 512 };
         std::string timestamp = ui.generateTimestamp();
@@ -205,6 +204,7 @@ void MainConsole::schedulerStart(){
 
         std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(frequency * 1000)));
     }
+    std::cout << "Scheduler thread stopping" << std::endl;
 }
 
 void MainConsole::schedulerStop(){

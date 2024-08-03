@@ -163,8 +163,10 @@ void Scheduler::roundRobin(int quantumCycles){
                     if (!process->allocatedMemory){
                         auto pagingAllocator = dynamic_cast<PagingMemoryAllocator*>(memory->getAllocator());
                         Process* processToSwapOut = selectRandomProcessToSwapOut();
-
+                        
                         if (processToSwapOut){
+                            numPagedIn += process->getNumPage();
+                            numPagedOut += process->getNumPage();
                             pagingAllocator->writeProcessToBackingStore(process.get(), processToSwapOut);
                             pagingAllocator->readProcessFromBackingStore(process.get());
                         }
@@ -174,7 +176,8 @@ void Scheduler::roundRobin(int quantumCycles){
                         readyQueue.push(process);
                         continue;
                     }
-                    numPagedIn += process->getNumPage();
+                    else
+                        numPagedIn += process->getNumPage();
                 }
                 else if (Memory::getInstance().getAllocator()->getName() == "FlatMemoryAllocator"){
                     if (!process->allocatedMemory){
@@ -264,9 +267,10 @@ void Scheduler::readConfigFile(const std::string& filename){
 Process* Scheduler::selectRandomProcessToSwapOut(){
     std::vector<Process*> candidates;
 
-    for (const auto& process : runningProcesses){
-        if (process != nullptr && process->currentState == Process::RUNNING)
+    for (const auto& process : runningProcesses) {
+        if (process != nullptr && process->currentState == Process::RUNNING){
             candidates.push_back(process.get());
+        }
     }
 
     if (candidates.empty())
@@ -286,9 +290,9 @@ void Scheduler::generateQuantumCycleTxtFile(int quantumCycle){
     size_t currentAddress = 0;
     std::vector<std::string> processEntries;
 
-    std::vector<std::shared_ptr<Process>> runningProcesses_ = getRunningProcesses();
+    std::vector<std::shared_ptr<Process>> runningProcesses = getRunningProcesses();
 
-    for (const auto& process : runningProcesses_){
+    for (const auto& process : runningProcesses){
         if (process){
             ++processesInMemory;
             size_t upperLimit = currentAddress + process->getMemRequired();
@@ -362,7 +366,7 @@ int Scheduler::getMaxPage() const {
     return maxPage;
 }
 
-std::vector<std::shared_ptr<Process>> Scheduler::getRunningProcesses() const{
+std::vector<std::shared_ptr<Process>> Scheduler::getRunningProcesses(){
     std::lock_guard<std::mutex> lock(queueMutex);
     std::vector<std::shared_ptr<Process>> running;
 
