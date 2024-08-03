@@ -5,6 +5,7 @@
 #include "FlatMemoryAllocator.h"
 
 FlatMemoryAllocator::FlatMemoryAllocator(size_t maxSize) : maxSize(maxSize), allocatedSize(0), allocationMap(maxSize, false){
+    activeMem = 0;
     memory = new char[maxSize];
     std::memset(memory, '.', maxSize); // Initialize memory with '.'
 }
@@ -17,7 +18,7 @@ void* FlatMemoryAllocator::allocate(Process* process){
     std::lock_guard<std::mutex> lock(allocationMutex);
 
     size_t memReq = process->getMemRequired();
-    for (size_t i = 0; i <= maxSize - memReq + 1; ++i) {
+    for (size_t i = 0; i <= maxSize - memReq; ++i) {
         if (canAlloc(i, memReq)) {
             allocAt(i, memReq);
             void* allocatedPtr = static_cast<void*>(&memory[i]);
@@ -28,6 +29,7 @@ void* FlatMemoryAllocator::allocate(Process* process){
             }
             
             process->allocatedMemory = allocatedPtr;
+            activeMem += memReq;
             
             return allocatedPtr;
         }
@@ -53,7 +55,10 @@ size_t FlatMemoryAllocator::deallocate(Process* process){
     }
 
     size_t index = static_cast<char*>(allocatedMemory) - memory;
-    return deallocAt(index);
+    size_t deallocatedSize = deallocAt(index);
+    activeMem -= deallocatedSize;
+
+    return deallocatedSize;
 }
 
 bool FlatMemoryAllocator::canAlloc(size_t index, size_t size) const{
@@ -89,6 +94,10 @@ size_t FlatMemoryAllocator::deallocAt(size_t index){
     allocatedSize -= size;
 
     return size;
+}
+
+size_t FlatMemoryAllocator::getActiveMem() const{
+    return activeMem;
 }
 
 size_t FlatMemoryAllocator::getMaxSize() const{

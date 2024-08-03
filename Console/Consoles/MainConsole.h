@@ -22,7 +22,7 @@ public:
     void printDetails();
     void schedulerStart();
     void schedulerStop();
-    void vmStat();
+    void vmStat(const std::string &allocator);
 
     int secondsToMilliseconds(double seconds);
 

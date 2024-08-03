@@ -21,8 +21,10 @@ public:
     size_t getMaxSize() const override;
     size_t getAllocatedSize() const;
     std::string getName() const;
+    size_t getActiveMem() const;
 
 private:
+    size_t activeMem;
     size_t allocatedAmount;
     size_t maxSize;
     size_t allocatedSize;
